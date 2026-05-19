@@ -242,9 +242,13 @@ class InvenTreeAPI(object):
             return False
 
         # Request an auth token from the server
+        if self.api_version < 490:
+            token_url = 'user/token/'
+        else:
+            token_url = 'user/me/token/'
         try:
             response = self.get(
-                'user/token/',
+                token_url,
                 params={
                     'name': self.token_name,
                 }
