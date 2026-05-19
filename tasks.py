@@ -65,7 +65,7 @@ def check_server(c, host="http://localhost:12345", username="testuser", password
 
     auth = HTTPBasicAuth(username=username, password=password)
 
-    url = f"{host}/api/user/token/"
+    url = f"{host}/api/user/me/token/"
 
     response = None
 
