@@ -65,14 +65,15 @@ def check_server(c, host="http://localhost:12345", username="testuser", password
 
     auth = HTTPBasicAuth(username=username, password=password)
 
-    url = f"{host}/api/user/token/"
+    token_url = f"{host}/api/user/me/token/"
+    token_fallback_checked = False
 
     response = None
 
     while response is None:
 
         try:
-            response = requests.get(url, auth=auth, timeout=0.5)
+            response = requests.get(token_url, auth=auth, timeout=0.5)
         except Exception as e:
             if debug:
                 print("Error:", str(e))
@@ -87,6 +88,16 @@ def check_server(c, host="http://localhost:12345", username="testuser", password
 
             else:
                 return False
+
+        # Maybe this is an old implementation? Check for X-InvenTree-API header
+        if response and not token_fallback_checked:
+            token_version = response.headers.get('X-InvenTree-API', None)
+            if token_version and int(token_version) < 490:
+                if debug:
+                    print("No token endpoint, but server is responding - maybe an old implementation?")
+                token_fallback_checked = True
+                token_url = f"{host}/api/user/token/"
+                response = None
 
     if response.status_code != 200:
         if debug:
