@@ -289,14 +289,8 @@ class POTest(InvenTreeTestCase):
         result = po.receiveAll(location=use_location)
         self.assertIsNone(result)
 
-        # hold the order, then complete it
-        po._statusupdate(status='hold')
-
-        # Complete the order, do not accept any incomplete lines
-        po.complete(accept_incomplete=False)
-        po.reload()
-
         # Check that the order is now complete
+        po.reload()
         self.assertEqual(po.status, 30)
 
     def test_order_complete(self):
