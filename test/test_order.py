@@ -9,11 +9,11 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from test_api import InvenTreeTestCase  # noqa: E402
 
-from inventree.base import Attachment  # noqa: E402
 from inventree import company  # noqa: E402
 from inventree import order  # noqa: E402
 from inventree import part  # noqa: E402
 from inventree import stock  # noqa: E402
+from inventree.base import Attachment  # noqa: E402
 
 
 class POTest(InvenTreeTestCase):
@@ -84,7 +84,7 @@ class POTest(InvenTreeTestCase):
         n = len(order.PurchaseOrder.list(self.api))
 
         # Create a PO with unique reference
-        ref = f"PO-{n+1}"
+        ref = f"PO-{n + 1}"
 
         po = supplier.createPurchaseOrder(
             reference=ref,
@@ -284,6 +284,9 @@ class POTest(InvenTreeTestCase):
         result = po.receiveAll(location=use_location)
         self.assertIsNone(result)
 
+        # hold the order, then complete it
+        po._statusupdate(status='hold')
+
         # Complete the order, do not accept any incomplete lines
         po.complete(accept_incomplete=False)
         po.reload()
@@ -396,7 +399,7 @@ class POTest(InvenTreeTestCase):
 
     def test_invalid_list(self):
         """Test list with an invalid parameter.
-        
+
         Ref: https://github.com/inventree/inventree-python/issues/246
         """
 
@@ -405,7 +408,7 @@ class POTest(InvenTreeTestCase):
         results = order.PurchaseOrder.list(self.api, project_code=999999999)
         self.assertEqual(len(results), 0)
 
-        # Try the same again, but raise the eror
+        # Try the same again, but raise the error
         with self.assertRaises(HTTPError):
             results = order.PurchaseOrder.list(
                 self.api,
@@ -418,7 +421,7 @@ class POTest(InvenTreeTestCase):
 
         # Create a new project code
         pc = ProjectCode.create(self.api, {
-            'code': f"TEST-{n+1}",
+            'code': f"TEST-{n + 1}",
             'description': 'Test project code',
         })
 
@@ -619,7 +622,7 @@ class SOTest(InvenTreeTestCase):
         shipment_1 = order.SalesOrderShipment.create(
             self.api, data={
                 'order': so.pk,
-                'reference': f'Package {num_shipments+1}'
+                'reference': f'Package {num_shipments + 1}'
             }
         )
 
@@ -639,7 +642,7 @@ class SOTest(InvenTreeTestCase):
             shipment_2 = so.addShipment(f'Package {num_shipments}')
 
         # Create new shipment - use addShipment method. No extra data
-        shipment_2 = so.addShipment(f'Package {num_shipments+1}')
+        shipment_2 = so.addShipment(f'Package {num_shipments + 1}')
 
         # Assert the shipment is not created
         self.assertIsNotNone(shipment_2)
@@ -648,7 +651,7 @@ class SOTest(InvenTreeTestCase):
         self.assertEqual(shipment_2.getOrder().pk, so.pk)
 
         # Assert shipment reference is as expected
-        self.assertEqual(shipment_2.reference, f'Package {num_shipments+1}')
+        self.assertEqual(shipment_2.reference, f'Package {num_shipments + 1}')
 
         # Count number of current shipments
         self.assertEqual(len(so.getShipments()), num_shipments + 1)
@@ -657,11 +660,11 @@ class SOTest(InvenTreeTestCase):
         # Create another shipment - use addShipment method.
         # With some extra data, including non-sense order
         # (which should be overwritten)
-        notes = f'Test shipment number {num_shipments+1} for order {so.pk}'
+        notes = f'Test shipment number {num_shipments + 1} for order {so.pk}'
         tracking_number = '93414134343'
 
         shipment_2 = so.addShipment(
-            reference=f'Package {num_shipments+1}',
+            reference=f'Package {num_shipments + 1}',
             order=10103413,
             notes=notes,
             tracking_number=tracking_number
@@ -674,7 +677,7 @@ class SOTest(InvenTreeTestCase):
         self.assertEqual(shipment_2.getOrder().pk, so.pk)
 
         # Assert shipment reference is as expected
-        self.assertEqual(shipment_2.reference, f'Package {num_shipments+1}')
+        self.assertEqual(shipment_2.reference, f'Package {num_shipments + 1}')
 
         # Make sure extra data is also as expected
         self.assertEqual(shipment_2.tracking_number, tracking_number)
@@ -729,11 +732,11 @@ class SOTest(InvenTreeTestCase):
             if len(allocations) == 0:
                 shp.delete()
                 continue
-            
+
             # If the shipment has no date, try to mark it shipped
             if shp.shipment_date is None:
                 shp.ship()
-        
+
         so.complete()
         self.assertEqual(so.status, 20)
         self.assertEqual(so.status_text, 'Shipped')
