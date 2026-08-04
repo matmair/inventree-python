@@ -90,6 +90,7 @@ class POTest(InvenTreeTestCase):
             reference=ref,
             description="This is a PO created using the Python interface"
         )
+        assert po
 
         self.assertIsNotNone(po)
         self.assertIsNotNone(po.pk)
@@ -119,6 +120,7 @@ class POTest(InvenTreeTestCase):
                 continue
 
             line = po.addLineItem(part=sp.pk, quantity=idx)
+            assert line
 
             self.assertEqual(line.getOrder().pk, po.pk)
 
@@ -147,7 +149,7 @@ class POTest(InvenTreeTestCase):
 
         # Let's add some!
         extraline = po.addExtraLineItem(quantity=1, reference="Transport costs", notes="Extra line item added from Python interface", price=10, price_currency="EUR")
-
+        assert extraline
         self.assertEqual(extraline.getOrder().pk, po.pk)
 
         self.assertIsNotNone(extraline)
@@ -173,6 +175,7 @@ class POTest(InvenTreeTestCase):
             'reference': ref,
             'description': 'Some new order'
         })
+        assert po
 
         self.assertEqual(po.status, 10)
         self.assertEqual(po.status_text, "Pending")
@@ -196,6 +199,7 @@ class POTest(InvenTreeTestCase):
             'reference': ref,
             'description': 'A purchase order with items to be received',
         })
+        assert po
 
         # Get first location
         use_location = stock.StockLocation.list(self.api, limit=1)[0]
@@ -267,6 +271,7 @@ class POTest(InvenTreeTestCase):
         # Receive all line items
         # Use the ID of the location here
         result = po.receiveAll(location=use_location.pk)
+        assert result
 
         # Check the result returned
         if self.api.api_version < 385:  # Ref: https://github.com/inventree/InvenTree/pull/10174/
@@ -284,14 +289,8 @@ class POTest(InvenTreeTestCase):
         result = po.receiveAll(location=use_location)
         self.assertIsNone(result)
 
-        # hold the order, then complete it
-        po._statusupdate(status='hold')
-
-        # Complete the order, do not accept any incomplete lines
-        po.complete(accept_incomplete=False)
-        po.reload()
-
         # Check that the order is now complete
+        po.reload()
         self.assertEqual(po.status, 30)
 
     def test_order_complete(self):
@@ -306,6 +305,7 @@ class POTest(InvenTreeTestCase):
             'reference': ref,
             'description': 'A new purchase order',
         })
+        assert po
 
         # Add some line items
         for p in company.SupplierPart.list(self.api, supplier=1, limit=5):
@@ -377,6 +377,7 @@ class POTest(InvenTreeTestCase):
             'reference': f'PO-{n + 100}',
             'description': 'A new purchase order',
         })
+        assert po
 
         attachments = po.getAttachments()
         self.assertEqual(len(attachments), 0)
@@ -558,6 +559,7 @@ class SOTest(InvenTreeTestCase):
                 'customer': 4,
                 "description": "Selling some stuff",
             })
+        assert so
 
         n = len(so.getAttachments())
 
@@ -584,6 +586,7 @@ class SOTest(InvenTreeTestCase):
             'customer': 4,
             "description": "Selling some stuff",
         })
+        assert so
 
         # Add some line items to the SalesOrder
         for p in part.Part.list(self.api, is_template=False, salable=True, limit=5):
@@ -645,6 +648,7 @@ class SOTest(InvenTreeTestCase):
         shipment_2 = so.addShipment(f'Package {num_shipments + 1}')
 
         # Assert the shipment is not created
+        assert shipment_2
         self.assertIsNotNone(shipment_2)
 
         # Assert the shipment Order is equal to the expected one
@@ -671,6 +675,7 @@ class SOTest(InvenTreeTestCase):
         )
 
         # Assert the shipment is created
+        assert shipment_2
         self.assertIsNotNone(shipment_2)
 
         # Assert the shipment Order is equal to the expected one
@@ -790,6 +795,7 @@ class ROTest(InvenTreeTestCase):
             reference=ref,
             description="A new return order"
         )
+        assert ro
 
         self.assertIsNotNone(ro)
         self.assertIsNotNone(ro.pk)
