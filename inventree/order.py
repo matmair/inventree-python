@@ -16,3 +16,4 @@ from inventree.sales_order import SalesOrder  # noqa:F401
 from inventree.sales_order import SalesOrderExtraLineItem  # noqa:F401
 from inventree.sales_order import SalesOrderLineItem  # noqa:F401
 from inventree.sales_order import SalesOrderShipment  # noqa:F401
+from inventree.sales_order import SalesOrderAllocation  # noqa:F401

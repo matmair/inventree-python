@@ -209,9 +209,9 @@ class StockTest(InvenTreeTestCase):
         self.assertTrue(len(StockItem.list(self.api, location=3)) >= 10)
 
         # Delete *all* items from location 3
-        StockItem.bulkDelete(self.api, filters={
-            'location': 3
-        })
+        items = [item.pk for item in StockItem.list(self.api, location=3)]
+
+        StockItem.bulkDelete(self.api, items=list(items))
 
         loc = StockLocation(self.api, pk=3)
         items = loc.getStockItems()

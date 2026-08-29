@@ -9,11 +9,11 @@ sys.path.append(os.path.abspath(os.path.dirname(__file__)))
 
 from test_api import InvenTreeTestCase  # noqa: E402
 
-from inventree.base import Attachment  # noqa: E402
 from inventree import company  # noqa: E402
 from inventree import order  # noqa: E402
 from inventree import part  # noqa: E402
 from inventree import stock  # noqa: E402
+from inventree.base import Attachment  # noqa: E402
 
 
 class POTest(InvenTreeTestCase):
@@ -84,12 +84,13 @@ class POTest(InvenTreeTestCase):
         n = len(order.PurchaseOrder.list(self.api))
 
         # Create a PO with unique reference
-        ref = f"PO-{n+1}"
+        ref = f"PO-{n + 1}"
 
         po = supplier.createPurchaseOrder(
             reference=ref,
             description="This is a PO created using the Python interface"
         )
+        assert po
 
         self.assertIsNotNone(po)
         self.assertIsNotNone(po.pk)
@@ -119,6 +120,7 @@ class POTest(InvenTreeTestCase):
                 continue
 
             line = po.addLineItem(part=sp.pk, quantity=idx)
+            assert line
 
             self.assertEqual(line.getOrder().pk, po.pk)
 
@@ -147,7 +149,7 @@ class POTest(InvenTreeTestCase):
 
         # Let's add some!
         extraline = po.addExtraLineItem(quantity=1, reference="Transport costs", notes="Extra line item added from Python interface", price=10, price_currency="EUR")
-
+        assert extraline
         self.assertEqual(extraline.getOrder().pk, po.pk)
 
         self.assertIsNotNone(extraline)
@@ -173,6 +175,7 @@ class POTest(InvenTreeTestCase):
             'reference': ref,
             'description': 'Some new order'
         })
+        assert po
 
         self.assertEqual(po.status, 10)
         self.assertEqual(po.status_text, "Pending")
@@ -196,6 +199,7 @@ class POTest(InvenTreeTestCase):
             'reference': ref,
             'description': 'A purchase order with items to be received',
         })
+        assert po
 
         # Get first location
         use_location = stock.StockLocation.list(self.api, limit=1)[0]
@@ -267,6 +271,7 @@ class POTest(InvenTreeTestCase):
         # Receive all line items
         # Use the ID of the location here
         result = po.receiveAll(location=use_location.pk)
+        assert result
 
         # Check the result returned
         if self.api.api_version < 385:  # Ref: https://github.com/inventree/InvenTree/pull/10174/
@@ -284,11 +289,8 @@ class POTest(InvenTreeTestCase):
         result = po.receiveAll(location=use_location)
         self.assertIsNone(result)
 
-        # Complete the order, do not accept any incomplete lines
-        po.complete(accept_incomplete=False)
-        po.reload()
-
         # Check that the order is now complete
+        po.reload()
         self.assertEqual(po.status, 30)
 
     def test_order_complete(self):
@@ -303,6 +305,7 @@ class POTest(InvenTreeTestCase):
             'reference': ref,
             'description': 'A new purchase order',
         })
+        assert po
 
         # Add some line items
         for p in company.SupplierPart.list(self.api, supplier=1, limit=5):
@@ -374,6 +377,7 @@ class POTest(InvenTreeTestCase):
             'reference': f'PO-{n + 100}',
             'description': 'A new purchase order',
         })
+        assert po
 
         attachments = po.getAttachments()
         self.assertEqual(len(attachments), 0)
@@ -396,7 +400,7 @@ class POTest(InvenTreeTestCase):
 
     def test_invalid_list(self):
         """Test list with an invalid parameter.
-        
+
         Ref: https://github.com/inventree/inventree-python/issues/246
         """
 
@@ -405,7 +409,7 @@ class POTest(InvenTreeTestCase):
         results = order.PurchaseOrder.list(self.api, project_code=999999999)
         self.assertEqual(len(results), 0)
 
-        # Try the same again, but raise the eror
+        # Try the same again, but raise the error
         with self.assertRaises(HTTPError):
             results = order.PurchaseOrder.list(
                 self.api,
@@ -418,7 +422,7 @@ class POTest(InvenTreeTestCase):
 
         # Create a new project code
         pc = ProjectCode.create(self.api, {
-            'code': f"TEST-{n+1}",
+            'code': f"TEST-{n + 1}",
             'description': 'Test project code',
         })
 
@@ -555,6 +559,7 @@ class SOTest(InvenTreeTestCase):
                 'customer': 4,
                 "description": "Selling some stuff",
             })
+        assert so
 
         n = len(so.getAttachments())
 
@@ -581,6 +586,7 @@ class SOTest(InvenTreeTestCase):
             'customer': 4,
             "description": "Selling some stuff",
         })
+        assert so
 
         # Add some line items to the SalesOrder
         for p in part.Part.list(self.api, is_template=False, salable=True, limit=5):
@@ -619,7 +625,7 @@ class SOTest(InvenTreeTestCase):
         shipment_1 = order.SalesOrderShipment.create(
             self.api, data={
                 'order': so.pk,
-                'reference': f'Package {num_shipments+1}'
+                'reference': f'Package {num_shipments + 1}'
             }
         )
 
@@ -639,16 +645,17 @@ class SOTest(InvenTreeTestCase):
             shipment_2 = so.addShipment(f'Package {num_shipments}')
 
         # Create new shipment - use addShipment method. No extra data
-        shipment_2 = so.addShipment(f'Package {num_shipments+1}')
+        shipment_2 = so.addShipment(f'Package {num_shipments + 1}')
 
         # Assert the shipment is not created
+        assert shipment_2
         self.assertIsNotNone(shipment_2)
 
         # Assert the shipment Order is equal to the expected one
         self.assertEqual(shipment_2.getOrder().pk, so.pk)
 
         # Assert shipment reference is as expected
-        self.assertEqual(shipment_2.reference, f'Package {num_shipments+1}')
+        self.assertEqual(shipment_2.reference, f'Package {num_shipments + 1}')
 
         # Count number of current shipments
         self.assertEqual(len(so.getShipments()), num_shipments + 1)
@@ -657,24 +664,25 @@ class SOTest(InvenTreeTestCase):
         # Create another shipment - use addShipment method.
         # With some extra data, including non-sense order
         # (which should be overwritten)
-        notes = f'Test shipment number {num_shipments+1} for order {so.pk}'
+        notes = f'Test shipment number {num_shipments + 1} for order {so.pk}'
         tracking_number = '93414134343'
 
         shipment_2 = so.addShipment(
-            reference=f'Package {num_shipments+1}',
+            reference=f'Package {num_shipments + 1}',
             order=10103413,
             notes=notes,
             tracking_number=tracking_number
         )
 
         # Assert the shipment is created
+        assert shipment_2
         self.assertIsNotNone(shipment_2)
 
         # Assert the shipment Order is equal to the expected one
         self.assertEqual(shipment_2.getOrder().pk, so.pk)
 
         # Assert shipment reference is as expected
-        self.assertEqual(shipment_2.reference, f'Package {num_shipments+1}')
+        self.assertEqual(shipment_2.reference, f'Package {num_shipments + 1}')
 
         # Make sure extra data is also as expected
         self.assertEqual(shipment_2.tracking_number, tracking_number)
@@ -729,11 +737,11 @@ class SOTest(InvenTreeTestCase):
             if len(allocations) == 0:
                 shp.delete()
                 continue
-            
+
             # If the shipment has no date, try to mark it shipped
             if shp.shipment_date is None:
                 shp.ship()
-        
+
         so.complete()
         self.assertEqual(so.status, 20)
         self.assertEqual(so.status_text, 'Shipped')
@@ -787,6 +795,7 @@ class ROTest(InvenTreeTestCase):
             reference=ref,
             description="A new return order"
         )
+        assert ro
 
         self.assertIsNotNone(ro)
         self.assertIsNotNone(ro.pk)
