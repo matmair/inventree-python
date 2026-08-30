@@ -290,7 +290,6 @@ class InvenTreeAPI(object):
 
         return self.token
 
-
     def request(self, url: str, **kwargs):
         """ Perform a URL request to the Inventree API """
 
